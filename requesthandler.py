@@ -1,7 +1,7 @@
 import requests
 
 def requests_manager(route,method,data,isjson,isdata):
-    url='https://terrible-lotty-sivarajan-cbd2472b.koyeb.app/'+route
+    url='https://terrible-lotty-sivarajan-cbd2472b.koyeb.app'+route
     try:
         if isjson:
             response=method(url,json=data)
@@ -9,7 +9,6 @@ def requests_manager(route,method,data,isjson,isdata):
             response=method(url,data=data)
         else:
             response=method(url,params=data)
-        print('from request',response.json())
 
         return response.json()
     except requests.exceptions.ConnectionError:

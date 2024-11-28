@@ -3,7 +3,6 @@ from main_home_page import main_home_view
 from attedencepage import take_attedence_view,student_card_view,add_student_detail_view,successfull_message_view,forgot_password_view
 from fletschema import BottomSheetCntCreator,AttedenceContainerCreator,InformationContainer,YearChoosingDropDown,TextFields
 from requesthandler import requests_manager,requests
-from download import download_student_details
 from datetime import date,datetime
 import time
 import os
@@ -19,23 +18,29 @@ def main(page:Page):
     def fp_handler(e:FilePickerResultEvent):
         if e.path:
             download_path=f'{e.path}/Latha Mathavan student Details.xlsx'
+            attedence_list_lv.current.controls.insert(0,ProgressBar(height=8,color="cyan", bgcolor="white"))
+            page.update()
             if os.path.exists(download_path):
                 i=0
                 while os.path.exists(download_path):
                     download_path=f'{e.path}/Latha Mathavan student Details ({i}).xlsx'
                     i+=1
 
-            response=download_student_details(download_dict,download_path)
-            if response:
+            response=requests.get('https://terrible-lotty-sivarajan-cbd2472b.koyeb.app/download-student-details',json={'data':download_dict})
+            try:
+                with open(download_path,'wb') as f:
+                    f.write(response.content)
                 dad.content=ResponsiveRow([Text('Successfully Downloded !',weight=FontWeight.W_700,size=18,color='green',text_align='center'),Text(f'{download_path}\n In {e.path}',weight=FontWeight.W_700,size=18,color=colors.BLUE_ACCENT,text_align='center')])
                 dad.title=Image("1103-confetti.gif",width=75,height=75,scale=1.2)
-            else:
+            except:
                 dad.content=ResponsiveRow([Text('Failed To Download !',weight=FontWeight.W_700,size=18,color='red',text_align='center'),Text('Try To Choose Different Folder',weight=FontWeight.W_700,size=18,color=colors.BLUE_ACCENT,text_align='center')])
                 dad.title=Image('comp_3.webp',width=75,height=75,scale=1.2)
         else:
             dad.content=Text('Please Select a Folder To Download',weight=FontWeight.W_700,size=18,color='red',text_align='center')
             dad.title=Image('120-folder.gif',width=75,height=75)
+        
         dad.open=True
+        attedence_list_lv.current.controls.pop(0)
         page.update()
 
     
@@ -62,11 +67,10 @@ def main(page:Page):
 
         if isinstance(attedence_dict,dict):
             for i in list(attedence_dict.keys()):
-                print(attedence_dict,i)
+                
                 reg_no=i
                 name=attedence_dict.get(i).get('student_name')
                 attedence_list_lv.current.controls.append(AttedenceContainerCreator(str(reg_no),name.title(),ischeckboxvisibel=ischeckboxvisible,cnt_data=attedence_dict.get(i),cnt_onclick=cnt_onclick,checkbox_key=key,checkbox_handler=checkbox_handler_fun))
-                page.update()
                 nod_student_present=len(attedence_dict.get(reg_no).get('presents'))-1
                 download_dict['Register No'].append(int(reg_no))
                 download_dict['Student Name'].append(name.title())
@@ -80,7 +84,7 @@ def main(page:Page):
                 download_dict['Parent Mobile No'].append(attedence_dict.get(reg_no).get('parent_ph_no'))
                 download_dict['No Of Days Present'].append(nod_student_present)
                 download_dict['Attedence Percentage']=f"{requests_manager('/calculate-student-attedence',requests.get,{'dep':department.current.value,'sem':semester.current.value,'nod_student_present':nod_student_present},False,False)} %"
-                
+            page.update()   
         else:
             icon=icons.FILE_DOWNLOAD_OFF_OUTLINED
             color='red'
@@ -117,7 +121,6 @@ def main(page:Page):
                     name=j.get(key).get('student_name')
                     attedence_dict[reg_no]=str(ispresent)
                     attedence_list_lv.current.controls.append(AttedenceContainerCreator(str(reg_no),name.title(),checkbox_handler,ispresent['bool'],ischeckboxdisabeld=True,checkboxfillcolor='green',cnt_data=j.get(key),cnt_onclick=show_student_details))
-                    page.update()
                     nod_student_present=len(j.get(key).get('presents'))-1
                     download_dict['Register No'].append(int(key))
                     download_dict['Student Name'].append(name.title())
@@ -131,7 +134,7 @@ def main(page:Page):
                         download_dict[date_of_sd].append(ispresent['words'])
                     download_dict['No Of Days Present'].append(nod_student_present)
                     download_dict['Attedence Percentage']=f"{requests_manager('/calculate-student-attedence',requests.get,{'dep':department.current.value,'sem':semester.current.value,'nod_student_present':nod_student_present},False,False)} %"
-
+                page.update()
                     
         else:
             icon=icons.DRIVE_FILE_RENAME_OUTLINE
@@ -177,7 +180,6 @@ def main(page:Page):
             else:
                 if int(e.control.data) in delete_list:
                     delete_list.remove(int(e.control.data))
-            print(len(delete_list),len(attedence_list_lv.current.controls))
             if len(delete_list)==len(attedence_list_lv.current.controls):
                 page.views[-1].controls[0].controls[0].value=True
                 page.update()
@@ -324,8 +326,7 @@ def main(page:Page):
                             height=40,
                             bar_bgcolor='white',
                             bar_hint_text='search students here...',
-                            bar_text_style=TextStyle(weight=FontWeight.W_700,color='black'),
-                            bar_hint_text_style=TextStyle(weight=FontWeight.W_700,color='grey'),
+                            
                             view_header_text_style=TextStyle(weight=FontWeight.W_700,color='black'),
                             view_hint_text_style=TextStyle(weight=FontWeight.W_700,color='black'),
                             bar_trailing=[
@@ -525,7 +526,6 @@ def main(page:Page):
             old_view_and_delete_fun(True,None,'delete',checkbox_handler,ad.title.value,False)
 
         elif e.control.key=='viewold':
-            print(page.views[-1].controls[0].controls[0].value)
             old_view_and_delete_fun(False,show_student_details,None,None,page.views[-1].controls[0].controls[0].value,False)
 
         elif e.control.key=='oldview':
@@ -549,7 +549,6 @@ def main(page:Page):
             ad.update()
             time.sleep(0.2)
             page.views.append(successfull_message_view(view_pop_handler,page.width,res,icon,color))
-            print(res)
 
         page.update()
 
@@ -603,7 +602,6 @@ def main(page:Page):
                 page.update()
                 time.sleep(1)
                 page.views[-1].controls[0].content.controls[2].controls.pop(0)
-                print("input field couldn't be empty")
                 page.update()
         except:
             page.views[-1].controls[0].content.controls[2].controls.insert(
@@ -613,14 +611,12 @@ def main(page:Page):
             page.update()
             time.sleep(1)
             page.views[-1].controls[0].content.controls[2].controls.pop(0)
-            print('input field couldnt br empty')
         finally:
             page.views[-1].controls[0].content.controls[2].controls[0].content.controls[4].controls[0].text=btn_txt
             page.views[-1].controls[0].content.controls[2].controls[0].content.controls[4].controls[0].disabled=False
         page.update()
 
     def bottom_sheet_handler(e):
-        print(e.control.key)
         if e.control.key=='Add Or Edit SD':
             bs.content=Container(
                     height=200,
