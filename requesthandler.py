@@ -1,7 +1,7 @@
 import requests
 
 def requests_manager(route,method,data,isjson,isdata):
-    url='http://127.0.0.1:8000'+route
+    url='https://terrible-lotty-sivarajan-cbd2472b.koyeb.app/'+route
     try:
         if isjson:
             response=method(url,json=data)

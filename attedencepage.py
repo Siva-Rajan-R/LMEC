@@ -45,8 +45,7 @@ def student_card_view(back,width,data,adp):
                                             controls=[
                                                 
                                                 Image(
-                                                    #https://www.lathamathavan.edu.in/wp-content/uploads/2021/11/cropped-LOGO-150x150.png
-                                                    src='https://www.lathamathavan.edu.in/wp-content/uploads/2021/11/cropped-LOGO-150x150.png',
+                                                    src='icon.png',
                                                     width=60,
                                                     height=60,
                                                     border_radius=60
@@ -140,8 +139,8 @@ def add_student_detail_view(back,width,btn_fun,btn_txt):
                                             controls=[
                                                 
                                                 Image(
-                                                    #https://www.lathamathavan.edu.in/wp-content/uploads/2021/11/cropped-LOGO-150x150.png
-                                                    src='https://www.lathamathavan.edu.in/wp-content/uploads/2021/11/cropped-LOGO-150x150.png',
+                                                    #icon.png
+                                                    src='icon.png',
                                                     width=60,
                                                     height=60,
                                                     border_radius=60
@@ -245,8 +244,7 @@ def forgot_password_view(back,width,btn_fun,key):
                                             controls=[
                                                 
                                                 Image(
-                                                    #https://www.lathamathavan.edu.in/wp-content/uploads/2021/11/cropped-LOGO-150x150.png
-                                                    src='https://www.lathamathavan.edu.in/wp-content/uploads/2021/11/cropped-LOGO-150x150.png',
+                                                    src='icon.png',
                                                     width=60,
                                                     height=60,
                                                     border_radius=60

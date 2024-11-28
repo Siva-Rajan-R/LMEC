@@ -14,7 +14,7 @@ def main_home_view(view_pop,width,bottom_sheet):
                                 controls=[
                                     Row(controls=[IconButton(icon=icons.ARROW_BACK,icon_size=30,icon_color='black',on_click=view_pop)],alignment=MainAxisAlignment.START),
                                     Image(
-                                        src='https://www.lathamathavan.edu.in/wp-content/uploads/2021/11/cropped-LOGO-150x150.png',
+                                        src='icon.png',
                                         width=100,
                                         height=100,
                                         border_radius=100

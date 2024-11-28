@@ -12,7 +12,6 @@ attedence_dict=dict()
 delete_list=list()
 download_dict={'Register No':[],'Student Name':[],'Department':[],'Semester':[],'Student Mobile No':[],'Parent Mobile No':[],'No Of Days Present':[],'Attedence Percentage':[]}
 def main(page:Page):
-    page.theme_mode=ThemeMode.DARK
     attedence_list_lv=Ref[ListView]()
     department=Ref[Dropdown]()
     semester=Ref[Dropdown]()
@@ -232,15 +231,19 @@ def main(page:Page):
             e.control.text='Verifying...'
             e.control.disabled=True
             page.update()
-            res=requests_manager('/verify-password',requests.get,{'password':bs.content.controls[0].value},False,True)
-            
-            if isinstance(res,bool) and res:
-                bs.open=False
-                page.update()
-                time.sleep(0.2)
-                page.views.append(main_home_view(view_pop_handler,page.width,bottom_sheet_handler))
+            if bs.content.controls[0].value!="":
+                res=requests_manager('/verify-password',requests.get,{'password':bs.content.controls[0].value},False,True)
+                
+                if isinstance(res,bool) and res:
+                    bs.open=False
+                    page.update()
+                    time.sleep(0.2)
+                    page.views.append(main_home_view(view_pop_handler,page.width,bottom_sheet_handler))
+                else:
+                    bs.content.controls[0].error_text=res
             else:
-                bs.content.controls[0].error_text=res
+                bs.content.controls[0].error_text="Input Field Couldn't Be Empty"
+
             e.control.text='Verify'
             e.control.disabled=False
 
@@ -304,7 +307,7 @@ def main(page:Page):
                 Row(
                     controls=[
                         Image(
-                            src='https://www.lathamathavan.edu.in/wp-content/uploads/2021/11/cropped-LOGO-150x150.png',
+                            src='icon.png',
                             width=50,
                             height=50,
                             border_radius=50
@@ -507,6 +510,7 @@ def main(page:Page):
                 ad.actions[0].key='oldview'
                 ad.open=True
                 page.update()
+
         elif e.control.key in ['Add SD','Edit SD']:
             btn_txt='Add'
             if e.control.key=='Edit SD':
@@ -711,7 +715,7 @@ def main(page:Page):
                                 content=Row(
                                     controls=[
                                         Image(
-                                            src='https://www.lathamathavan.edu.in/wp-content/uploads/2021/11/cropped-LOGO-150x150.png',
+                                            src='icon.png',
                                             width=100,
                                             height=100,
                                             border_radius=100
