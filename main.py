@@ -11,6 +11,7 @@ attedence_dict=dict()
 delete_list=list()
 download_dict={'Register No':[],'Student Name':[],'Department':[],'Semester':[],'Student Mobile No':[],'Parent Mobile No':[],'No Of Days Present':[],'Attedence Percentage':[]}
 def main(page:Page):
+    page.theme_mode=ThemeMode.DARK
     attedence_list_lv=Ref[ListView]()
     department=Ref[Dropdown]()
     semester=Ref[Dropdown]()
@@ -25,7 +26,7 @@ def main(page:Page):
                 while os.path.exists(download_path):
                     download_path=f'{e.path}/Latha Mathavan student Details ({i}).xlsx'
                     i+=1
-
+            #'https://terrible-lotty-sivarajan-cbd2472b.koyeb.app/download-student-details'
             response=requests.get('https://terrible-lotty-sivarajan-cbd2472b.koyeb.app/download-student-details',json={'data':download_dict})
             try:
                 with open(download_path,'wb') as f:
@@ -51,8 +52,7 @@ def main(page:Page):
         attedence_list_lv.current.controls.insert(0,ProgressBar(height=8,color="cyan", bgcolor="white"))
         page.update()
         attedence_dict=requests_manager('/show-old-student-details',requests.get,{'dep':department.current.value,'year':year},False,False)
-        attedence_list_lv.current.controls.pop(0)
-        page.update()
+        
 
         if isinitialview:
             page.views[-1].controls.insert(
@@ -71,6 +71,7 @@ def main(page:Page):
                 reg_no=i
                 name=attedence_dict.get(i).get('student_name')
                 attedence_list_lv.current.controls.append(AttedenceContainerCreator(str(reg_no),name.title(),ischeckboxvisibel=ischeckboxvisible,cnt_data=attedence_dict.get(i),cnt_onclick=cnt_onclick,checkbox_key=key,checkbox_handler=checkbox_handler_fun))
+                page.update()
                 nod_student_present=len(attedence_dict.get(reg_no).get('presents'))-1
                 download_dict['Register No'].append(int(reg_no))
                 download_dict['Student Name'].append(name.title())
@@ -94,7 +95,9 @@ def main(page:Page):
             
             if attedence_dict !=None:
                 page.views.append(successfull_message_view(view_pop_handler,page.width,attedence_dict,icon,color))
+        attedence_list_lv.current.controls.pop(0)
         page.update()
+        
 
 
     def current_view_fun(date_of_sd):
@@ -104,8 +107,7 @@ def main(page:Page):
         attedence_list_lv.current.controls.insert(0,ProgressBar(height=8,color="cyan", bgcolor="white"))
         page.update()
         edit_attedence=requests_manager('/show-particular-date-student-details',requests.get,{'dep':department.current.value,'sem':semester.current.value,'date_of_student_details':date_of_sd,'isforeditattedence':False},False,False)
-        attedence_list_lv.current.controls.pop(0)
-        page.update()
+        
         ispresent={'bool':False,'words':'Absent'}
         if isinstance(edit_attedence,dict):
             for i in list(edit_attedence.keys()):
@@ -121,6 +123,7 @@ def main(page:Page):
                     name=j.get(key).get('student_name')
                     attedence_dict[reg_no]=str(ispresent)
                     attedence_list_lv.current.controls.append(AttedenceContainerCreator(str(reg_no),name.title(),checkbox_handler,ispresent['bool'],ischeckboxdisabeld=True,checkboxfillcolor='green',cnt_data=j.get(key),cnt_onclick=show_student_details))
+                    page.update()
                     nod_student_present=len(j.get(key).get('presents'))-1
                     download_dict['Register No'].append(int(key))
                     download_dict['Student Name'].append(name.title())
@@ -134,7 +137,7 @@ def main(page:Page):
                         download_dict[date_of_sd].append(ispresent['words'])
                     download_dict['No Of Days Present'].append(nod_student_present)
                     download_dict['Attedence Percentage']=f"{requests_manager('/calculate-student-attedence',requests.get,{'dep':department.current.value,'sem':semester.current.value,'nod_student_present':nod_student_present},False,False)} %"
-                page.update()
+                
                     
         else:
             icon=icons.DRIVE_FILE_RENAME_OUTLINE
@@ -144,6 +147,7 @@ def main(page:Page):
                 color='red'
             if edit_attedence !=None:
                 page.views.append(successfull_message_view(view_pop_handler,page.width,edit_attedence,icon,color))
+        attedence_list_lv.current.controls.pop(0)
         page.update()
 
 
