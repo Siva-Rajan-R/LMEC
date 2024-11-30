@@ -18,7 +18,7 @@ class BottomSheetCntCreator(Container):
 class AttedenceContainerCreator(Container):
     def __init__(self,reg_no,name,checkbox_handler=None,checkbox_value=False,checkbox_key='attedence',ischeckboxdisabeld=False,checkboxfillcolor=None,cnt_data=None,ischeckboxvisibel=True,cnt_onclick=None):
         super().__init__()
-        self.height=100
+        self.expand=True
         self.margin=margin.all(5)
         self.padding=padding.all(20)
         self.shadow=BoxShadow(0,5,'grey',blur_style=ShadowBlurStyle.OUTER)
@@ -33,7 +33,8 @@ class AttedenceContainerCreator(Container):
                         Text(reg_no,size=20,weight=FontWeight.W_700,color='black'),
                         Text(name,size=20,weight=FontWeight.W_700,color='black')
                     ],
-                    alignment=MainAxisAlignment.CENTER
+                    alignment=MainAxisAlignment.CENTER,
+                    
                 ),
                 
                 Row(
@@ -89,11 +90,12 @@ class YearChoosingDropDown(Dropdown):
         self.value=value
         self.padding=padding.all(-5)
         self.label='Choose Year...'
+    
      
          
 
 class TextFields(TextField):
-    def __init__(self,label=None,hinttext=None,colour='white',autofocus=False,ispassword=False):
+    def __init__(self,label=None,hinttext=None,colour='white',autofocus=False,ispassword=False,keybordtype=KeyboardType.TEXT):
         super().__init__()
         self.width=200
         self.border=InputBorder.UNDERLINE
@@ -110,3 +112,4 @@ class TextFields(TextField):
         self.password=ispassword
         self.can_reveal_password=ispassword
         self.error_style=TextStyle(color='red',weight=FontWeight.W_600)
+        self.keyboard_type=keybordtype

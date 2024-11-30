@@ -1,5 +1,5 @@
 from flet import *
-
+from fletschema import TextFields
 def take_attedence_view(reference,appbar,isdelete,checkbox_handler):
         return View(
             controls=[
@@ -29,7 +29,7 @@ def take_attedence_view(reference,appbar,isdelete,checkbox_handler):
             
         )
 
-def student_card_view(back,width,data,adp):
+def student_card_view(back,width,data):
     return View(
             controls=[
                 Container(
@@ -67,8 +67,9 @@ def student_card_view(back,width,data,adp):
                                     Container(
                                         width=300,
                                         expand=True,
-                                        blur=Blur(100,100,tile_mode=BlurTileMode.MIRROR),
-                                        shadow=BoxShadow(10,10,'black',blur_style=ShadowBlurStyle.OUTER),
+                                        #blur=Blur(100,100,tile_mode=BlurTileMode.MIRROR),
+                                        border=border.all(1,'white'),
+                                        shadow=BoxShadow(0,5,'black',blur_style=ShadowBlurStyle.OUTER),
                                         margin=margin.all(10),
                                         border_radius=20,
                                         padding=padding.all(10),
@@ -81,7 +82,7 @@ def student_card_view(back,width,data,adp):
                                                     ]
                                                 ),
                                                 Column(
-                                                    spacing=20,
+                                                    spacing=15,
                                                     controls=[
                                                         ResponsiveRow(
                                                             controls=[
@@ -90,6 +91,7 @@ def student_card_view(back,width,data,adp):
                                                             ],
                                                             spacing=10
                                                         )
+                                                        
                                                         for i in data
                                                     ]
                                                 )
@@ -97,30 +99,18 @@ def student_card_view(back,width,data,adp):
                                             
                                         )
                                     ),
-                                    Container(
-                                        content=Column(
-                                            controls=[
-                                                Row([Text('Attedence Percentage',weight=FontWeight.W_700,size=20,color='white')],alignment=MainAxisAlignment.CENTER),
-                                                Row([Text(f'{adp}%',weight=FontWeight.W_700,size=22,color='white')],alignment=MainAxisAlignment.CENTER)
-                                            ]
-                                        ),
-                                        width=320,  
-                                        shadow=BoxShadow(0,7,'black',blur_style=ShadowBlurStyle.OUTER),
-                                        border_radius=20,
-                                        padding=padding.all(10),
-                                        #blur=Blur(100,100,tile_mode=BlurTileMode.MIRROR),
-                                    )
+                                    
                                 ],
                                 expand=True,
                                 width=width,
                                 horizontal_alignment=CrossAxisAlignment.CENTER,
-                                scroll=ScrollMode.ADAPTIVE
                             )
                             
                         ]
                     )
                 )
-            ]
+            ],
+            scroll=ScrollMode.ADAPTIVE
         )
 
 def add_student_detail_view(back,width,btn_fun,btn_txt):
@@ -170,10 +160,10 @@ def add_student_detail_view(back,width,btn_fun,btn_txt):
                                         alignment=Alignment(0,0),
                                         content=Column(
                                              controls=[
-                                                TextField(label='Enter Student Reg no',border_radius=20,label_style=TextStyle(color='black',weight=FontWeight.W_600),text_style=TextStyle(color='black',weight=FontWeight.W_700),border_color='black',border=border.all(1,'black'),cursor_color='black',keyboard_type=KeyboardType.NUMBER),
-                                                TextField(label='Enter Student Name',border_radius=20,label_style=TextStyle(color='black',weight=FontWeight.W_600),text_style=TextStyle(color='black',weight=FontWeight.W_700),border_color='black',border=border.all(1,'black'),cursor_color='black'),
-                                                TextField(label='Enter Student Mobile No',border_radius=20,label_style=TextStyle(color='black',weight=FontWeight.W_600),text_style=TextStyle(color='black',weight=FontWeight.W_700),border_color='black',border=border.all(1,'black'),cursor_color='black',keyboard_type=KeyboardType.NUMBER),
-                                                TextField(label='Enter Student Mobile No',border_radius=20,label_style=TextStyle(color='black',weight=FontWeight.W_600),text_style=TextStyle(color='black',weight=FontWeight.W_700),border_color='black',border=border.all(1,'black'),cursor_color='black',keyboard_type=KeyboardType.NUMBER),
+                                                  TextFields(label='Enter Student Reg no',colour='black',keybordtype=KeyboardType.NUMBER),
+                                                  TextFields(label='Enter Student Name',colour='black'),
+                                                  TextFields(label='Enter Student Mobile No',colour='black',keybordtype=KeyboardType.NUMBER),
+                                                  TextFields(label='Enter Parent Mobile No',colour='black',keybordtype=KeyboardType.NUMBER),
                                                 Row(controls=[ElevatedButton(text=btn_txt,style=ButtonStyle(color='white'),on_click=btn_fun,key=btn_txt)],alignment=MainAxisAlignment.CENTER)
                                              ],
                                              width=width,
@@ -181,7 +171,7 @@ def add_student_detail_view(back,width,btn_fun,btn_txt):
                                              expand=True,
                                              horizontal_alignment=CrossAxisAlignment.CENTER,
                                              alignment=MainAxisAlignment.CENTER,
-                                             scroll=ScrollMode.ADAPTIVE
+                                             
                                         )
                                     )
                                  ],
@@ -190,6 +180,7 @@ def add_student_detail_view(back,width,btn_fun,btn_txt):
                                  horizontal_alignment=CrossAxisAlignment.CENTER,
                                  alignment=MainAxisAlignment.CENTER,
                                  scroll=ScrollMode.ADAPTIVE
+                                 
                             )
                         ]
                    )
@@ -213,7 +204,7 @@ def successfull_message_view(back,width,message,icon_name,color):
                                 controls=[
                                     Icon(icon_name,size=200,color=color),
                                     ResponsiveRow(controls=[Text(message.title(),text_align=TextAlign.CENTER,weight=FontWeight.W_700,color=color,size=30)],alignment=MainAxisAlignment.CENTER),
-                                    ResponsiveRow(controls=[Text('Thank You !',text_align=TextAlign.CENTER,weight=FontWeight.W_700,color='green',size=30)],alignment=MainAxisAlignment.CENTER)
+                                    ResponsiveRow(controls=[Text('Thank You !',text_align=TextAlign.CENTER,weight=FontWeight.W_700,color='green',size=30)],alignment=MainAxisAlignment.CENTER),
                                 ],
                                 expand=True,
                                 width=width,
@@ -274,9 +265,10 @@ def forgot_password_view(back,width,btn_fun,key):
                                         alignment=Alignment(0,0),
                                         content=Column(
                                              controls=[
-                                                TextField(label='Enter The Email',border_radius=20,label_style=TextStyle(color='black',weight=FontWeight.W_600),text_style=TextStyle(color='black',weight=FontWeight.W_700),border_color='black',border=border.all(1,'black'),cursor_color='black',keyboard_type=KeyboardType.EMAIL),
-                                                TextField(label='New Password',border_radius=20,label_style=TextStyle(color='black',weight=FontWeight.W_600),text_style=TextStyle(color='black',weight=FontWeight.W_700),border_color='black',border=border.all(1,'black'),cursor_color='black'),
+                                                TextFields(label='Enter The Email',colour='black'),
+                                                TextFields(label='Enter The Password',colour='black'),
                                                 Row(controls=[ElevatedButton(text='Submit',style=ButtonStyle(color='white'),on_click=btn_fun,key=key)],alignment=MainAxisAlignment.CENTER)
+                    
                                              ],
                                              width=width,
                                              spacing=35,

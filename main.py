@@ -9,9 +9,10 @@ import os
 
 attedence_dict=dict()
 delete_list=list()
-download_dict={'Register No':[],'Student Name':[],'Department':[],'Semester':[],'Student Mobile No':[],'Parent Mobile No':[],'No Of Days Present':[],'Attedence Percentage':[]}
+download_dict={'Register No':[],'Student Name':[],'Department':[],'Semester':[],'Student Mobile No':[],'Parent Mobile No':[],'No Of Days Present':[],'Attedence Percentage':[],'No Of Days Attedence Taken':[]}
 def main(page:Page):
     page.theme_mode=ThemeMode.DARK
+    tot_no_of_st=0
     attedence_list_lv=Ref[ListView]()
     department=Ref[Dropdown]()
     semester=Ref[Dropdown]()
@@ -27,7 +28,7 @@ def main(page:Page):
                     download_path=f'{e.path}/Latha Mathavan student Details ({i}).xlsx'
                     i+=1
             #'https://terrible-lotty-sivarajan-cbd2472b.koyeb.app/download-student-details'
-            response=requests.get('https://terrible-lotty-sivarajan-cbd2472b.koyeb.app/download-student-details',json={'data':download_dict})
+            response=requests.get('http://127.0.0.1:8000/download-student-details',json={'data':download_dict})
             try:
                 with open(download_path,'wb') as f:
                     f.write(response.content)
@@ -47,10 +48,11 @@ def main(page:Page):
     
     def old_view_and_delete_fun(ischeckboxvisible,cnt_onclick,key,checkbox_handler_fun,year,isinitialview):
         global download_dict
-        download_dict={'Register No':[],'Student Name':[],'Department':[],'Semester':[],'Student Mobile No':[],'Parent Mobile No':[],'No Of Days Present':[],'Attedence Percentage':[]}
+        download_dict={'Register No':[],'Student Name':[],'Department':[],'Semester':[],'Student Mobile No':[],'Parent Mobile No':[],'No Of Days Present':[],'Attedence Percentage':[],'No Of Days Attedence Taken':[]}
         attedence_list_lv.current.controls.clear()
         attedence_list_lv.current.controls.insert(0,ProgressBar(height=8,color="cyan", bgcolor="white"))
         page.update()
+        attedence_dict=dict()
         attedence_dict=requests_manager('/show-old-student-details',requests.get,{'dep':department.current.value,'year':year},False,False)
         
 
@@ -59,93 +61,130 @@ def main(page:Page):
                 0,
                 Row(
                     controls=[
-                        YearChoosingDropDown(year_intial_value=2020,year_final_value=int(date.today().strftime('%Y')),key='viewold',onchange=ad_action_btns,width=150,height=40,value=ad.title.value)
+                        Container(content=YearChoosingDropDown(year_intial_value=2020,year_final_value=int(date.today().strftime('%Y')),key='viewold',onchange=ad_action_btns,width=150,height=40,value=ad.title.value),margin=margin.all(15))
                     ],
+                    
                 )
             )
             page.update()
 
         if isinstance(attedence_dict,dict):
             for i in list(attedence_dict.keys()):
-                
-                reg_no=i
-                name=attedence_dict.get(i).get('student_name')
-                attedence_list_lv.current.controls.append(AttedenceContainerCreator(str(reg_no),name.title(),ischeckboxvisibel=ischeckboxvisible,cnt_data=attedence_dict.get(i),cnt_onclick=cnt_onclick,checkbox_key=key,checkbox_handler=checkbox_handler_fun))
-                page.update()
-                nod_student_present=len(attedence_dict.get(reg_no).get('presents'))-1
-                download_dict['Register No'].append(int(reg_no))
-                download_dict['Student Name'].append(name.title())
-                download_dict['Department'].append(department.current.value)
-                download_dict['Semester'].append(semester.current.value)
-                if not download_dict.get('Year'):
-                    download_dict['Year']=[f"{int(year)}-{int(year)+4}"]
-                else:
-                    download_dict['Year'].append(f"{int(year)}-{int(year)+4}")
-                download_dict['Student Mobile No'].append(attedence_dict.get(reg_no).get('student_ph_no'))
-                download_dict['Parent Mobile No'].append(attedence_dict.get(reg_no).get('parent_ph_no'))
-                download_dict['No Of Days Present'].append(nod_student_present)
-                download_dict['Attedence Percentage']=f"{requests_manager('/calculate-student-attedence',requests.get,{'dep':department.current.value,'sem':semester.current.value,'nod_student_present':nod_student_present},False,False)} %"
+                if isinstance(attedence_dict.get(i),dict):
+                    reg_no=i
+                    name=attedence_dict.get(i).get('student_name')
+                    nod_student_present=len(attedence_dict.get(reg_no).get('presents'))-1
+                    download_dict['Register No'].append(reg_no)
+                    download_dict['Student Name'].append(name.title())
+                    download_dict['Department'].append(department.current.value)
+                    download_dict['Semester'].append(semester.current.value)
+                    if not download_dict.get('Year'):
+                        download_dict['Year']=[f"{int(year)}-{int(year)+4}"]
+                    else:
+                        download_dict['Year'].append(f"{int(year)}-{int(year)+4}")
+                    download_dict['Student Mobile No'].append(attedence_dict.get(reg_no).get('student_ph_no'))
+                    download_dict['Parent Mobile No'].append(attedence_dict.get(reg_no).get('parent_ph_no'))
+                    download_dict['No Of Days Present'].append(nod_student_present)
+                    res=requests_manager('/calculate-student-attedence',requests.get,{'dep':department.current.value,'sem':semester.current.value,'nod_student_present':nod_student_present,'isforoldstudents':True,'year':year},False,False)
+                    if res and isinstance(res,dict):
+                        download_dict['Attedence Percentage'].append(f"{res['attedence_percentage']} %")
+                        attedence_dict.get(i)['Attedence Percentage']=f"{res['attedence_percentage']} %"
+                        download_dict['No Of Days Attedence Taken'].append(f"{res['no_of_days_attedence_taken']} Days")
+                        attedence_dict.get(i)['No Of Days Attedence Taken']=f"{res['no_of_days_attedence_taken']} Days"
+                    attedence_list_lv.current.controls.append(AttedenceContainerCreator(str(reg_no),name.title(),ischeckboxvisibel=ischeckboxvisible,cnt_data=attedence_dict.get(i),cnt_onclick=cnt_onclick,checkbox_key=key,checkbox_handler=checkbox_handler_fun))
+                    page.update()
+            appbar.title.controls[1].controls[2].visible=True
             page.update()   
         else:
             icon=icons.FILE_DOWNLOAD_OFF_OUTLINED
             color='red'
-            if attedence_dict=='Please Check Your Connection !':
+            if attedence_dict in ['Please Check Your Connection !','Something Went Wrong']:
                 icon=icons.WIFI_OFF_OUTLINED
                 color='red'
             
-            if attedence_dict !=None:
+            if not isinstance(attedence_dict,dict) and attedence_dict !=None:
                 page.views.append(successfull_message_view(view_pop_handler,page.width,attedence_dict,icon,color))
         attedence_list_lv.current.controls.pop(0)
         page.update()
         
 
 
-    def current_view_fun(date_of_sd):
+    def current_view_fun(date_of_sd,isforattedence):
         global download_dict
-        download_dict={'Register No':[],'Student Name':[],'Department':[],'Semester':[],'Student Mobile No':[],'Parent Mobile No':[],'No Of Days Present':[],'Attedence Percentage':[]}
+        nonlocal tot_no_of_st
+        download_dict={'Register No':[],'Student Name':[],'Department':[],'Semester':[],'Student Mobile No':[],'Parent Mobile No':[],'No Of Days Present':[],'Attedence Percentage':[],'No Of Days Attedence Taken':[]}
         attedence_list_lv.current.controls.clear()
         attedence_list_lv.current.controls.insert(0,ProgressBar(height=8,color="cyan", bgcolor="white"))
+        attedence_dict=dict()
         page.update()
-        edit_attedence=requests_manager('/show-particular-date-student-details',requests.get,{'dep':department.current.value,'sem':semester.current.value,'date_of_student_details':date_of_sd,'isforeditattedence':False},False,False)
+        edit_attedence=requests_manager('/show-particular-date-student-details',requests.get,{'dep':department.current.value,'sem':semester.current.value,'date_of_student_details':date_of_sd,'isforeditattedence':isforattedence},False,False)
         
         ispresent={'bool':False,'words':'Absent'}
-        if isinstance(edit_attedence,dict):
-            for i in list(edit_attedence.keys()):
-                if i=='presents':
-                    ispresent['bool']=True
-                    ispresent['words']='Present'
-                else:
-                    ispresent['bool']=False
-                    ispresent['words']='Absent'
-                for j in edit_attedence.get(i):
-                    key=list(j.keys())[0]
-                    reg_no=key
-                    name=j.get(key).get('student_name')
-                    attedence_dict[reg_no]=str(ispresent)
-                    attedence_list_lv.current.controls.append(AttedenceContainerCreator(str(reg_no),name.title(),checkbox_handler,ispresent['bool'],ischeckboxdisabeld=True,checkboxfillcolor='green',cnt_data=j.get(key),cnt_onclick=show_student_details))
-                    page.update()
-                    nod_student_present=len(j.get(key).get('presents'))-1
-                    download_dict['Register No'].append(int(key))
-                    download_dict['Student Name'].append(name.title())
-                    download_dict['Department'].append(department.current.value)
-                    download_dict['Semester'].append(semester.current.value)
-                    download_dict['Student Mobile No'].append(j.get(key).get('student_ph_no'))
-                    download_dict['Parent Mobile No'].append(j.get(key).get('parent_ph_no'))
-                    if not download_dict.get(date_of_sd):
-                        download_dict[date_of_sd]=[ispresent['words']]
-                    else:
-                        download_dict[date_of_sd].append(ispresent['words'])
-                    download_dict['No Of Days Present'].append(nod_student_present)
-                    download_dict['Attedence Percentage']=f"{requests_manager('/calculate-student-attedence',requests.get,{'dep':department.current.value,'sem':semester.current.value,'nod_student_present':nod_student_present},False,False)} %"
-                
-                    
+        if isforattedence:
+            if isinstance(edit_attedence,dict):
+                    tot_no_of_st=(len(edit_attedence.get('presents'))+len(edit_attedence.get('absents')))-len(edit_attedence.get('presents'))
+                    for i in list(edit_attedence.keys()):
+                        if i=='presents':
+                            ispresent['bool']=True
+                            ispresent['words']='Present'
+                        else:
+                            ispresent['bool']=False
+                            ispresent['words']='Absent'
+
+                        for j in edit_attedence.get(i):
+                            key=list(j.keys())[0]
+                            reg_no=key
+                            name=j.get(key).get('student_name')
+                            attedence_dict[reg_no]=str(ispresent['bool'])
+                            attedence_list_lv.current.controls.append(AttedenceContainerCreator(str(reg_no),name.title(),checkbox_handler,ispresent['bool']))
+                            page.update()
         else:
-            icon=icons.DRIVE_FILE_RENAME_OUTLINE
-            color='red'
-            if edit_attedence=='Please Check Your Connection !':
+            if isinstance(edit_attedence,dict):
+                for i in list(edit_attedence.keys()):
+                    if i=='presents':
+                        ispresent['bool']=True
+                        ispresent['words']='Present'
+                    else:
+                        ispresent['bool']=False
+                        ispresent['words']='Absent'
+                    for j in edit_attedence.get(i):
+                        key=list(j.keys())[0]
+                        reg_no=key
+                        name=j.get(key).get('student_name')
+                        attedence_dict[reg_no]=str(ispresent)
+                        nod_student_present=len(j.get(key).get('presents'))-1
+                        download_dict['Register No'].append(key)
+                        download_dict['Student Name'].append(name.title())
+                        download_dict['Department'].append(department.current.value)
+                        download_dict['Semester'].append(semester.current.value)
+                        download_dict['Student Mobile No'].append(j.get(key).get('student_ph_no'))
+                        download_dict['Parent Mobile No'].append(j.get(key).get('parent_ph_no'))
+                        if not download_dict.get(date_of_sd):
+                            download_dict[date_of_sd]=[ispresent['words']]
+                        else:
+                            download_dict[date_of_sd].append(ispresent['words'])
+                        download_dict['No Of Days Present'].append(nod_student_present)
+                        res=requests_manager('/calculate-student-attedence',requests.get,{'dep':department.current.value,'sem':semester.current.value,'nod_student_present':nod_student_present,'isforoldstudents':False,'year':None},False,False)
+                        if res and isinstance(res,dict):
+                            download_dict['Attedence Percentage'].append(f"{res['attedence_percentage']} %")
+                            j.get(key)['Attedence Percentage']=f"{res['attedence_percentage']} %"
+                            download_dict['No Of Days Attedence Taken'].append(f"{res['no_of_days_attedence_taken']} Days")
+                            j.get(key)['No Of Days Attedence Taken']=f"{res['no_of_days_attedence_taken']} Days"
+                        
+                        attedence_list_lv.current.controls.append(AttedenceContainerCreator(str(reg_no),name.title(),checkbox_handler,ispresent['bool'],ischeckboxdisabeld=True,checkboxfillcolor='green',cnt_data=j.get(key),cnt_onclick=show_student_details))
+                        page.update()
+                        
+                        
+            
+        icon=icons.DRIVE_FILE_RENAME_OUTLINE
+        color='red'
+        if isinstance(edit_attedence,dict):
+            appbar.title.controls[1].controls[2].visible=True
+        else:
+            if edit_attedence in ['Please Check Your Connection !','Something Went Wrong']:
                 icon=icons.WIFI_OFF_OUTLINED
                 color='red'
-            if edit_attedence !=None:
+            if not isinstance(edit_attedence,dict) and edit_attedence !=None:
                 page.views.append(successfull_message_view(view_pop_handler,page.width,edit_attedence,icon,color))
         attedence_list_lv.current.controls.pop(0)
         page.update()
@@ -156,9 +195,15 @@ def main(page:Page):
         page.views[-1].controls[0].controls[0].content.value=selected_date
         page.update()
 
-        current_view_fun(selected_date)
+        current_view_fun(selected_date,False)
+    dp_month=int(date.today().month)+1
+    dp_year=int(date.today().year)
+    print(dp_month,dp_year)
+    if int(date.today().month)==12:
+        dp_year=int(date.today().year)+1
+        dp_month=2
 
-    dp=DatePicker(value=datetime(int(date.today().year),int(date.today().month),int(date.today().day)),first_date=datetime(2020,1,1),last_date=datetime(int(date.today().year),int(date.today().month)+1,1),on_change=dp_handler)
+    dp=DatePicker(value=datetime(int(date.today().year),int(date.today().month),int(date.today().day)),first_date=datetime(2020,1,1),last_date=datetime(dp_year,dp_month,1),on_change=dp_handler)
     bs=BottomSheet(content=Text(),enable_drag=True,show_drag_handle=True,bgcolor='white')
     fp=FilePicker(on_result=fp_handler)
     dad=AlertDialog(bgcolor='white',title=Text())
@@ -170,9 +215,14 @@ def main(page:Page):
 
     def checkbox_handler(e):
         global attedence_dict,delete_list
+        nonlocal tot_no_of_st
     
         if e.control.key=='attedence':
             attedence_dict[e.control.data]=str(e.control.value)
+            if e.control.value:
+                tot_no_of_st-=1
+            else:
+                tot_no_of_st+=1
 
         elif e.control.key=='delete':
             if page.views[-1].controls[0].controls[0].value:
@@ -205,6 +255,9 @@ def main(page:Page):
             page.views[-1].scroll_to(key='top')
             page.update()
         if e.control.key in ['Take Attedence','Edit Attedence']:
+            tot_st=len(attedence_list_lv.current.controls)-1
+            tot_presents=tot_st-tot_no_of_st
+            tot_absents=tot_no_of_st
             if e.control.key=='Take Attedence':
                 response=requests_manager("/add-attedence",requests.post,{'dep':department.current.value,'sem':semester.current.value,'presents':attedence_dict},True,False)
             elif e.control.key=='Edit Attedence':
@@ -212,7 +265,24 @@ def main(page:Page):
             attedence_list_lv.current.controls.pop(0)
             page.views.pop()
             page.views.append(successfull_message_view(view_pop_handler,page.width,response,icons.VERIFIED_OUTLINED,'green'))
-        
+            page.update()
+            page.views[-1].controls[0].content.controls[1].controls.append(
+                ResponsiveRow(
+                    controls=[
+                        Container(
+                            col=4,
+                            content=Text(value=i['text'],color=i['color'],text_align=TextAlign.CENTER,size=15,weight=FontWeight.W_700),
+                            padding=padding.all(10),
+                            border=border.all(1,'white'),
+                            shadow=BoxShadow(0,5,'grey',blur_style=ShadowBlurStyle.OUTER),
+                            border_radius=10,
+                            alignment=Alignment(0,0)
+                        )
+                        for i in [{'text':f"Total No of Presents\n{tot_presents}",'color':colors.GREEN_800},{'text':f"Total No of Absents\n{tot_absents}",'color':'red'},{'text':f"Total No of Students\n{tot_st}",'color':colors.BLUE_ACCENT}]
+                    ],
+                    alignment=MainAxisAlignment.CENTER
+                )
+            )
         elif e.control.key in ['Delete Current SD','Delete Old SD']:
             isdelete_all=page.views[-1].controls[0].controls[0].value
             if e.control.key=='Delete Current SD':
@@ -256,28 +326,37 @@ def main(page:Page):
         elif e.control.key=='send_password':
             email=page.views[-1].controls[0].content.controls[2].controls[0].content.controls[0].value
             password=page.views[-1].controls[0].content.controls[2].controls[0].content.controls[1].value
-            page.views[-1].controls[0].content.controls[2].controls[0].content.controls[2].controls[0].text='Submiting...'
-            page.views[-1].controls[0].content.controls[2].controls[0].content.controls[2].controls[0].disabled=True
-            page.update()
-            res=requests_manager('/create-password',requests.post,{'admin_mail':email,'new_password':password},False,True)
-            email=page.views[-1].controls[0].content.controls[2].controls[0].content.controls[0].value=""
-            password=page.views[-1].controls[0].content.controls[2].controls[0].content.controls[1].value=""
-            page.views[-1].controls[0].content.controls[2].controls[0].content.controls[2].controls[0].text='Submit'
-            page.views[-1].controls[0].content.controls[2].controls[0].content.controls[2].controls[0].disabled=False
-            if isinstance(res,bool):
-                page.views[-1].controls[0].content.controls[2].controls.insert(
-                    0,
-                    InformationContainer(msg='Password Created Successfully')
-                )
+            if email!="" and password!="":
+                page.views[-1].controls[0].content.controls[2].controls[0].content.controls[2].controls[0].text='Submiting...'
+                page.views[-1].controls[0].content.controls[2].controls[0].content.controls[2].controls[0].disabled=True
                 page.update()
-                time.sleep(1)
-                page.views[-1].controls[0].content.controls[2].controls.pop(0)
-                page.views.pop()
+                res=requests_manager('/create-password',requests.post,{'admin_mail':email,'new_password':password},False,True)
+                email=page.views[-1].controls[0].content.controls[2].controls[0].content.controls[0].value=""
+                password=page.views[-1].controls[0].content.controls[2].controls[0].content.controls[1].value=""
+                page.views[-1].controls[0].content.controls[2].controls[0].content.controls[2].controls[0].text='Submit'
+                page.views[-1].controls[0].content.controls[2].controls[0].content.controls[2].controls[0].disabled=False
+                if isinstance(res,bool):
+                    page.views[-1].controls[0].content.controls[2].controls.insert(
+                        0,
+                        InformationContainer(msg='Password Created Successfully')
+                    )
+                    page.update()
+                    time.sleep(1)
+                    page.views[-1].controls[0].content.controls[2].controls.pop(0)
+                    page.views.pop()
+                else:
+                    page.views[-1].controls[0].content.controls[2].controls.insert(
+                        0,
+                        InformationContainer(msg=res,icon=icons.REPORT_GMAILERRORRED_OUTLINED,bgcolor='red')
+                    )
+                    page.update()
+                    time.sleep(1)
+                    page.views[-1].controls[0].content.controls[2].controls.pop(0)
             else:
                 page.views[-1].controls[0].content.controls[2].controls.insert(
-                    0,
-                    InformationContainer(msg=res,icon=icons.REPORT_GMAILERRORRED_OUTLINED,bgcolor='red')
-                )
+                        0,
+                        InformationContainer(msg="Input Field Couldn't Be Empty",icon=icons.REPORT_GMAILERRORRED_OUTLINED,bgcolor='red')
+                    )
                 page.update()
                 time.sleep(1)
                 page.views[-1].controls[0].content.controls[2].controls.pop(0)
@@ -296,14 +375,12 @@ def main(page:Page):
 
     def show_student_details(e):
         reg_no=e.control.content.controls[0].controls[0].value
-        sem_or_year={'Sem :':semester.current.value}
+        sem_or_year={'Semester :':semester.current.value}
         if attedence_list_lv.current.controls[0].content.controls[1].controls[0].visible==False:
-            sem_or_year={'Year :':f"{int(page.views[-1].controls[0].controls[0].value)}-{int(page.views[-1].controls[0].controls[0].value)+4}"}
-        data=[{'Reg No :':reg_no},{'Student Name :':e.control.data['student_name'].title()},{'Dep :':department.current.value},sem_or_year,{'Mobile Number :':e.control.data['student_ph_no']},{'Parent Mobile Number':e.control.data['parent_ph_no']}]
-        adp=len(e.control.data['presents'])-1
-        page.views.append(student_card_view(view_pop_handler,page.width,data,adp))
+            sem_or_year={'Year :':f"{int(page.views[-1].controls[0].controls[0].content.value)}-{int(page.views[-1].controls[0].controls[0].content.value)+4}"}
+        data=[{'Reg No :':reg_no},{'Student Name :':e.control.data['student_name'].title()},{'Department :':department.current.value},sem_or_year,{'Mobile Number :':e.control.data['student_ph_no']},{'Parent Mobile Number :':e.control.data['parent_ph_no']},{'Attedence Percentage :':e.control.data['Attedence Percentage']},{'No Of Days Attedence Taken :':e.control.data['No Of Days Attedence Taken']}]
+        page.views.append(student_card_view(view_pop_handler,page.width,data))
         page.update()
-        adp=requests_manager('/calculate-student-attedence',requests.get,{'nod_student_present':len(e.control.data['presents'])-1,'dep':department.current.value,'sem':semester.current.value},False,False)
 
     
     appbar=AppBar(
@@ -355,6 +432,7 @@ def main(page:Page):
 
     def view_handler(e):
         global attedence_dict,delete_list
+        nonlocal tot_no_of_st
         appbar.title.controls[1].controls[1].value=''
         attedence_dict=dict()
         delete_list.clear()
@@ -394,62 +472,45 @@ def main(page:Page):
 
         elif e.control.key in ['Take Attedence','Edit Attedence']:
             appbar.title.controls[1].controls[2].icon=icons.UPLOAD_OUTLINED
+            appbar.title.controls[1].controls[2].visible=False
             appbar.title.controls[1].controls[2].key=e.control.key
             page.views.append(take_attedence_view(attedence_list_lv,appbar,False,checkbox_handler))
             page.update()
             attedence_list_lv.current.controls.insert(0,ProgressBar(height=8,color="cyan", bgcolor="white"))
             page.update()
+            print(e.control.key)
             if e.control.key=='Take Attedence':
                 attedence_dict=requests_manager('/show-all-student-details',requests.get,{'dep':department.current.value,'sem':semester.current.value,'isforattedence':True},False,False)
+                print(attedence_dict)
                 attedence_list_lv.current.controls.pop(0)
                 page.update()
                 
                 if isinstance(attedence_dict,dict):
+                    tot_no_of_st=len(list(attedence_dict.keys()))
                     for i in list(attedence_dict.keys()):
                         reg_no=i
                         name=attedence_dict.get(i).get('student_name')
                         attedence_dict[reg_no]='False'
                         attedence_list_lv.current.controls.append(AttedenceContainerCreator(str(reg_no),name.title(),checkbox_handler))
                         page.update()
+                    appbar.title.controls[1].controls[2].visible=True
                 else:
                     icon=icons.VERIFIED_OUTLINED
                     color='green'
-                    if attedence_dict=='Please Check Your Connection !':
+                    if attedence_dict in ['Please Check Your Connection !','Something Went Wrong']:
                         icon=icons.WIFI_OFF_OUTLINED
                         color='red'
-                    if attedence_dict!=None:
+                    if not isinstance(attedence_dict,dict) and attedence_dict!=None:
                         page.views.pop()
                         page.views.append(successfull_message_view(view_pop_handler,page.width,attedence_dict,icon,color))
             else:
-                edit_attedence=requests_manager('/show-particular-date-student-details',requests.get,{'dep':department.current.value,'sem':semester.current.value,'date_of_student_details':date.today().strftime("%d-%m-%Y"),'isforeditattedence':True},False,False)
-                attedence_list_lv.current.controls.pop(0)
-                page.update()
-                ispresent=False
-                
-                if isinstance(edit_attedence,dict):
-                    for i in list(edit_attedence.keys()):
-                        if i=='presents':
-                            ispresent=True
-                        else:
-                            ispresent=False
-                        for j in edit_attedence.get(i):
-                            key=list(j.keys())[0]
-                            reg_no=key
-                            name=j.get(key).get('student_name')
-                            attedence_dict[reg_no]=str(ispresent)
-                            attedence_list_lv.current.controls.append(AttedenceContainerCreator(str(reg_no),name.title(),checkbox_handler,ispresent))
-                            page.update()
-                else:
-                    icon=icons.ERROR_OUTLINE
-                    color='red'
-                    if edit_attedence=='Please Check Your Connection !':
-                        icon=icons.WIFI_OFF_OUTLINED
-                    if edit_attedence!=None:
-                        page.views.pop()
-                        page.views.append(successfull_message_view(view_pop_handler,page.width,edit_attedence,icon,color))
+                current_view_fun(date.today().strftime("%d-%m-%Y"),True)
+            
+            
 
         elif e.control.key in ['Delete Current SD','Delete Old SD']:
             appbar.title.controls[1].controls[2].icon=icons.DELETE_OUTLINE
+            appbar.title.controls[1].controls[2].visible=False
             appbar.title.controls[1].controls[2].key=e.control.key
             page.views.append(take_attedence_view(attedence_list_lv,appbar,True,checkbox_handler))
             page.update()
@@ -460,29 +521,31 @@ def main(page:Page):
                 attedence_dict=requests_manager('/show-all-student-details',requests.get,{'dep':department.current.value,'sem':semester.current.value,'isforattedence':False},False,False) 
                 attedence_list_lv.current.controls.pop(0)
                 page.update()
+                if isinstance(attedence_dict,dict):
+                    for i in list(attedence_dict.keys()):
+                        reg_no=i
+                        name=attedence_dict.get(i).get('student_name')
+                        attedence_list_lv.current.controls.append(AttedenceContainerCreator(reg_no,name.title(),checkbox_handler,checkbox_key='delete'))
+                    appbar.title.controls[1].controls[2].visible=True
+                else:
+                    icon=None
+                    color=None
+                    if attedence_dict in ['Please Check Your Connection !','Something Went Wrong']:
+                        icon=icons.WIFI_OFF_OUTLINED
+                        color='red'
+                    if not isinstance(attedence_dict,dict) and attedence_dict !=None:
+                        page.views.append(successfull_message_view(view_pop_handler,page.width,attedence_dict,icon,color))
+                
             else:  
                 ad.title=YearChoosingDropDown(year_intial_value=2020,year_final_value=int(date.today().strftime('%Y')))
                 ad.actions[0].text='Submit'
                 ad.actions[0].key='old'
                 ad.open=True
              
-            if isinstance(attedence_dict,dict):
-                for i in list(attedence_dict.keys()):
-                    reg_no=i
-                    name=attedence_dict.get(i).get('student_name')
-                    attedence_list_lv.current.controls.append(AttedenceContainerCreator(reg_no,name.title(),checkbox_handler,checkbox_key='delete'))
-            else:
-                icon=None
-                color=None
-                if attedence_dict=='Please Check Your Connection !':
-                    icon=icons.WIFI_OFF_OUTLINED
-                    color='red'
-                if attedence_dict !=None:
-                    page.views.append(successfull_message_view(view_pop_handler,page.width,attedence_dict,icon,color))
-           
 
         elif e.control.key in ['View Current SD','View Old SD']:
             appbar.title.controls[1].controls[2].icon=icons.DOWNLOAD_OUTLINED
+            appbar.title.controls[1].controls[2].visible=False
             appbar.title.controls[1].controls[2].key=e.control.key
             page.views.append(take_attedence_view(attedence_list_lv,appbar,False,checkbox_handler))
             page.update()
@@ -507,7 +570,7 @@ def main(page:Page):
                 )
                 page.update()
                 
-                current_view_fun(date.today().strftime("%d-%m-%Y"))
+                current_view_fun(date.today().strftime("%d-%m-%Y"),False)
                 
             else:
                 ad.title=YearChoosingDropDown(year_intial_value=2020,year_final_value=int(date.today().strftime('%Y')))
@@ -528,13 +591,13 @@ def main(page:Page):
         ad.open=False
         if e.control.key=='old':
             old_view_and_delete_fun(True,None,'delete',checkbox_handler,ad.title.value,False)
-
+            
         elif e.control.key=='viewold':
-            old_view_and_delete_fun(False,show_student_details,None,None,page.views[-1].controls[0].controls[0].value,False)
-
+            old_view_and_delete_fun(False,show_student_details,None,None,page.views[-1].controls[0].controls[0].content.value,False)
+            
         elif e.control.key=='oldview':
             old_view_and_delete_fun(False,show_student_details,None,None,ad.title.value,True)
-            page.update()
+            
 
         elif e.control.key=='movetonextsem':
             ad.actions[0].text='Moving...'
@@ -543,7 +606,7 @@ def main(page:Page):
             res=requests_manager('/move-to-next-sem',requests.put,{'dep':department.current.value},False,True)
             icon=icons.VERIFIED_OUTLINED
             color='green'
-            if res=='Please Check Your Connection !':
+            if res in ['Please Check Your Connection !','Something Went Wrong']:
                 icon=icons.WIFI_OFF_OUTLINED
                 color='red'
             
