@@ -9,7 +9,6 @@ def requests_manager(route,method,data,isjson,isdata):
             response=method(url,data=data)
         else:
             response=method(url,params=data)
-        print('response :',response.json())
         return response.json()
     except requests.exceptions.ConnectionError:
         return 'Please Check Your Connection !'

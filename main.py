@@ -628,7 +628,7 @@ def main(page:Page):
                         if int(attedence_list_lv.current.controls[i].content.controls[1].controls[0].data) in delete_list:
                             attedence_list_lv.current.controls.pop(i)
                             page.update()
-            page.update()
+        page.update()
 
     ad=AlertDialog(
         alignment=Alignment(0,0),
