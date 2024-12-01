@@ -27,7 +27,7 @@ def main(page:Page):
                 while os.path.exists(download_path):
                     download_path=f'{e.path}/Latha Mathavan student Details ({i}).xlsx'
                     i+=1
-            #'https://terrible-lotty-sivarajan-cbd2472b.koyeb.app/download-student-details'
+            
             response=requests.get('http://127.0.0.1:8000/download-student-details',json={'data':download_dict})
             try:
                 with open(download_path,'wb') as f:
@@ -82,8 +82,8 @@ def main(page:Page):
                         download_dict['Year']=[f"{int(year)}-{int(year)+4}"]
                     else:
                         download_dict['Year'].append(f"{int(year)}-{int(year)+4}")
-                    download_dict['Student Mobile No'].append(attedence_dict.get(reg_no).get('student_ph_no'))
-                    download_dict['Parent Mobile No'].append(attedence_dict.get(reg_no).get('parent_ph_no'))
+                    download_dict['Student Mobile No'].append(str(attedence_dict.get(reg_no).get('student_ph_no')))
+                    download_dict['Parent Mobile No'].append(str(attedence_dict.get(reg_no).get('parent_ph_no')))
                     download_dict['No Of Days Present'].append(nod_student_present)
                     res=requests_manager('/calculate-student-attedence',requests.get,{'dep':department.current.value,'sem':semester.current.value,'nod_student_present':nod_student_present,'isforoldstudents':True,'year':year},False,False)
                     if res and isinstance(res,dict):
@@ -98,6 +98,9 @@ def main(page:Page):
         else:
             icon=icons.FILE_DOWNLOAD_OFF_OUTLINED
             color='red'
+            print(ischeckboxvisible)
+            if ischeckboxvisible:
+                page.views.pop()
             if attedence_dict in ['Please Check Your Connection !','Something Went Wrong']:
                 icon=icons.WIFI_OFF_OUTLINED
                 color='red'
@@ -157,8 +160,8 @@ def main(page:Page):
                         download_dict['Student Name'].append(name.title())
                         download_dict['Department'].append(department.current.value)
                         download_dict['Semester'].append(semester.current.value)
-                        download_dict['Student Mobile No'].append(j.get(key).get('student_ph_no'))
-                        download_dict['Parent Mobile No'].append(j.get(key).get('parent_ph_no'))
+                        download_dict['Student Mobile No'].append(str(j.get(key).get('student_ph_no')))
+                        download_dict['Parent Mobile No'].append(str(j.get(key).get('parent_ph_no')))
                         if not download_dict.get(date_of_sd):
                             download_dict[date_of_sd]=[ispresent['words']]
                         else:
@@ -181,12 +184,15 @@ def main(page:Page):
         if isinstance(edit_attedence,dict):
             appbar.title.controls[1].controls[2].visible=True
         else:
+            if isforattedence:
+                page.views.pop()
             if edit_attedence in ['Please Check Your Connection !','Something Went Wrong']:
                 icon=icons.WIFI_OFF_OUTLINED
                 color='red'
             if not isinstance(edit_attedence,dict) and edit_attedence !=None:
                 page.views.append(successfull_message_view(view_pop_handler,page.width,edit_attedence,icon,color))
-        attedence_list_lv.current.controls.pop(0)
+        if attedence_list_lv.current.controls!="":
+            attedence_list_lv.current.controls.pop(0)
         page.update()
 
 
@@ -194,8 +200,9 @@ def main(page:Page):
         selected_date=e.control.value.strftime('%d-%m-%Y')
         page.views[-1].controls[0].controls[0].content.value=selected_date
         page.update()
-
         current_view_fun(selected_date,False)
+
+
     dp_month=int(date.today().month)+1
     dp_year=int(date.today().year)
     print(dp_month,dp_year)
@@ -228,6 +235,7 @@ def main(page:Page):
             if page.views[-1].controls[0].controls[0].value:
                 page.views[-1].controls[0].controls[0].value=False
                 page.update()
+            print(e.control.value,e.control.data,len(attedence_list_lv.current.controls),len(delete_list))
             if e.control.value:
                 if int(e.control.data) not in delete_list:
                     delete_list.append(int(e.control.data))
@@ -243,13 +251,16 @@ def main(page:Page):
             for i in range(temp):
                 if e.control.value==True:
                     attedence_list_lv.current.controls[i].content.controls[1].controls[0].value=True
+                    print(attedence_list_lv.current.controls[i].content.controls[1].controls[0].data)
+                    if int(attedence_list_lv.current.controls[i].content.controls[1].controls[0].data) not in delete_list:
+                        delete_list.append(int(attedence_list_lv.current.controls[i].content.controls[1].controls[0].data))
                 page.update()
 
 
 
     def send_attedence(e):
         global attedence_dict
-        if e.control.key not in ['View Current SD','View Old SD','verify_user','send_password']:
+        if e.control.key not in ['View Current SD','View Old SD','verify_user','send_password','Delete Current SD','Delete Old SD']:
             attedence_list_lv.current.controls.insert(0,ProgressBar(height=8,color="cyan", bgcolor="white"))
             attedence_list_lv.current.controls[0].key='top'
             page.views[-1].scroll_to(key='top')
@@ -284,22 +295,16 @@ def main(page:Page):
                 )
             )
         elif e.control.key in ['Delete Current SD','Delete Old SD']:
-            isdelete_all=page.views[-1].controls[0].controls[0].value
-            if e.control.key=='Delete Current SD':
-                response=requests_manager('/delete-current-student-details',requests.delete,{'dep':department.current.value,'sem':semester.current.value,'delete_all':isdelete_all,'reg_no':delete_list},False,True)
-            elif e.control.key=='Delete Old SD':
-                response=requests_manager('/delete-old-student-details',requests.delete,{'dep':department.current.value,'year':'2020','delete_all':isdelete_all,'reg_no':delete_list},False,True)
-            attedence_list_lv.current.controls.pop(0)
-            page.update()
-            if response:
-                if isdelete_all:
-                    attedence_list_lv.current.controls.clear()
-                else:
-                    for i in range(len(attedence_list_lv.current.controls)-1,-1,-1):
-                        if int(attedence_list_lv.current.controls[i].content.controls[1].controls[0].data) in delete_list:
-                            attedence_list_lv.current.controls.pop(i)
-                            page.update()
-
+            ad.title=Column(
+                controls=[
+                    Text(f'Are You Sure You Want To Delete {len(delete_list)} Student ?',weight=FontWeight.W_700,size=18,color='black',text_align=TextAlign.CENTER),
+                    Text("Note : This Couldn't Be Undone",weight=FontWeight.W_700,size=18,color='red',text_align=TextAlign.CENTER)
+                ]
+            )
+            ad.actions[0].text='Delete'
+            ad.actions[0].key=e.control.key
+            ad.open=True
+            
         elif e.control.key in ['View Current SD','View Old SD']:
             fp.get_directory_path()
         
@@ -363,7 +368,6 @@ def main(page:Page):
 
 
         page.update()
-        delete_list.clear()
         attedence_dict=dict()
     
     def search_students(e):
@@ -402,20 +406,7 @@ def main(page:Page):
                 ResponsiveRow(
                     controls=[
                         IconButton(col=2,icon=icons.ARROW_BACK,icon_size=30,icon_color='black',on_click=view_pop_handler),
-                        SearchBar(
-                            col=8,
-                            height=40,
-                            bar_bgcolor='white',
-                            bar_hint_text='search students here...',
-                            
-                            view_header_text_style=TextStyle(weight=FontWeight.W_700,color='black'),
-                            view_hint_text_style=TextStyle(weight=FontWeight.W_700,color='black'),
-                            bar_trailing=[
-                                Icon(name=icons.SEARCH,color='black')
-                            ],
-                            on_change=search_students,
-                            
-                        ),
+                        Container(col=8,content=TextField(on_change=search_students,height=40,suffix_icon=icons.SEARCH,cursor_color='grey',border_color='white',bgcolor='white',text_style=TextStyle(weight=FontWeight.W_600,color='black'),hint_style=TextStyle(weight=FontWeight.W_500,color='grey'),hint_text='Search here...',border_radius=30,content_padding=Padding(10,5,0,5)),shadow=BoxShadow(0,2,'black',blur_style=ShadowBlurStyle.OUTER),border_radius=30,margin=margin.all(5)),
                         IconButton(col=2,icon=icons.UPLOAD_OUTLINED,icon_size=30,icon_color='black',on_click=send_attedence)
                     ],
                     alignment=MainAxisAlignment.SPACE_EVENLY
@@ -513,6 +504,7 @@ def main(page:Page):
             appbar.title.controls[1].controls[2].visible=False
             appbar.title.controls[1].controls[2].key=e.control.key
             page.views.append(take_attedence_view(attedence_list_lv,appbar,True,checkbox_handler))
+            delete_list.clear()
             page.update()
             
             if e.control.key=='Delete Current SD':
@@ -530,10 +522,10 @@ def main(page:Page):
                 else:
                     icon=None
                     color=None
-                    if attedence_dict in ['Please Check Your Connection !','Something Went Wrong']:
-                        icon=icons.WIFI_OFF_OUTLINED
-                        color='red'
                     if not isinstance(attedence_dict,dict) and attedence_dict !=None:
+                        if attedence_dict in ['Please Check Your Connection !','Something Went Wrong']:
+                            icon=icons.WIFI_OFF_OUTLINED
+                            color='red'
                         page.views.append(successfull_message_view(view_pop_handler,page.width,attedence_dict,icon,color))
                 
             else:  
@@ -598,7 +590,6 @@ def main(page:Page):
         elif e.control.key=='oldview':
             old_view_and_delete_fun(False,show_student_details,None,None,ad.title.value,True)
             
-
         elif e.control.key=='movetonextsem':
             ad.actions[0].text='Moving...'
             ad.actions[0].disabled=True
@@ -617,7 +608,27 @@ def main(page:Page):
             time.sleep(0.2)
             page.views.append(successfull_message_view(view_pop_handler,page.width,res,icon,color))
 
-        page.update()
+        elif e.control.key in ['Delete Current SD','Delete Old SD']:
+            attedence_list_lv.current.controls.insert(0,ProgressBar(height=8,color="cyan", bgcolor="white"))
+            attedence_list_lv.current.controls[0].key='top'
+            page.views[-1].scroll_to(key='top')
+            page.update()
+            isdelete_all=page.views[-1].controls[0].controls[0].value
+            if e.control.key=='Delete Current SD':
+                response=requests_manager('/delete-current-student-details',requests.delete,{'dep':department.current.value,'sem':semester.current.value,'delete_all':isdelete_all,'reg_no':delete_list},False,True)
+            elif e.control.key=='Delete Old SD':
+                response=requests_manager('/delete-old-student-details',requests.delete,{'dep':department.current.value,'year':'2020','delete_all':isdelete_all,'reg_no':delete_list},False,True)
+            attedence_list_lv.current.controls.pop(0)
+            page.update()
+            if response:
+                if isdelete_all:
+                    attedence_list_lv.current.controls.clear()
+                else:
+                    for i in range(len(attedence_list_lv.current.controls)-1,-1,-1):
+                        if int(attedence_list_lv.current.controls[i].content.controls[1].controls[0].data) in delete_list:
+                            attedence_list_lv.current.controls.pop(i)
+                            page.update()
+            page.update()
 
     ad=AlertDialog(
         alignment=Alignment(0,0),
@@ -631,6 +642,7 @@ def main(page:Page):
     page.overlay.append(ad)
 
     def add_or_edit_student_details(e):
+        
         btn_txt=e.control.key
         sending_btn_txt='Adding...'
         route='/add-student-details'
@@ -642,6 +654,7 @@ def main(page:Page):
 
         page.views[-1].controls[0].content.controls[2].controls[0].content.controls[4].controls[0].text=sending_btn_txt
         page.views[-1].controls[0].content.controls[2].controls[0].content.controls[4].controls[0].disabled=True
+        page.views[-1].controls[0].content.controls[2].controls[0].content.controls[3].autofocus=False
         page.update()
         try:
             reg_no=int(page.views[-1].controls[0].content.controls[2].controls[0].content.controls[0].value)
