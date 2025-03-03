@@ -28,7 +28,7 @@ def main(page:Page):
                     download_path=f'{e.path}/Latha Mathavan student Details ({i}).xlsx'
                     i+=1
             
-            response=requests.get('http://127.0.0.1:8000/download-student-details',json={'data':download_dict})
+            response=requests.get('https://xenogeneic-jessalyn-aarthi-7242c979.koyeb.app/download-student-details',json={'data':download_dict})
             try:
                 with open(download_path,'wb') as f:
                     f.write(response.content)
@@ -98,7 +98,7 @@ def main(page:Page):
         else:
             icon=icons.FILE_DOWNLOAD_OFF_OUTLINED
             color='red'
-            print(ischeckboxvisible)
+            
             if ischeckboxvisible:
                 page.views.pop()
             if attedence_dict in ['Please Check Your Connection !','Something Went Wrong']:
@@ -205,7 +205,7 @@ def main(page:Page):
 
     dp_month=int(date.today().month)+1
     dp_year=int(date.today().year)
-    print(dp_month,dp_year)
+    
     if int(date.today().month)==12:
         dp_year=int(date.today().year)+1
         dp_month=2
@@ -235,7 +235,7 @@ def main(page:Page):
             if page.views[-1].controls[0].controls[0].value:
                 page.views[-1].controls[0].controls[0].value=False
                 page.update()
-            print(e.control.value,e.control.data,len(attedence_list_lv.current.controls),len(delete_list))
+            
             if e.control.value:
                 if int(e.control.data) not in delete_list:
                     delete_list.append(int(e.control.data))
@@ -251,7 +251,7 @@ def main(page:Page):
             for i in range(temp):
                 if e.control.value==True:
                     attedence_list_lv.current.controls[i].content.controls[1].controls[0].value=True
-                    print(attedence_list_lv.current.controls[i].content.controls[1].controls[0].data)
+                    
                     if int(attedence_list_lv.current.controls[i].content.controls[1].controls[0].data) not in delete_list:
                         delete_list.append(int(attedence_list_lv.current.controls[i].content.controls[1].controls[0].data))
                 page.update()
@@ -469,10 +469,10 @@ def main(page:Page):
             page.update()
             attedence_list_lv.current.controls.insert(0,ProgressBar(height=8,color="cyan", bgcolor="white"))
             page.update()
-            print(e.control.key)
+            
             if e.control.key=='Take Attedence':
                 attedence_dict=requests_manager('/show-all-student-details',requests.get,{'dep':department.current.value,'sem':semester.current.value,'isforattedence':True},False,False)
-                print(attedence_dict)
+                
                 attedence_list_lv.current.controls.pop(0)
                 page.update()
                 
@@ -646,11 +646,11 @@ def main(page:Page):
         btn_txt=e.control.key
         sending_btn_txt='Adding...'
         route='/add-student-details'
-        method=requests.post
+        methods=requests.post
         if e.control.key=='Update':
             sending_btn_txt='Updating...'
             route='/update-student-student-details'
-            method=requests.put
+            methods=requests.put
 
         page.views[-1].controls[0].content.controls[2].controls[0].content.controls[4].controls[0].text=sending_btn_txt
         page.views[-1].controls[0].content.controls[2].controls[0].content.controls[4].controls[0].disabled=True
@@ -662,7 +662,7 @@ def main(page:Page):
             spn=int(page.views[-1].controls[0].content.controls[2].controls[0].content.controls[2].value)
             ppn=int(page.views[-1].controls[0].content.controls[2].controls[0].content.controls[3].value)
             if name!="":
-                res=requests_manager(route,method,{'dep':department.current.value,'sem':semester.current.value,'reg_no':reg_no,'student_name':name,'student_ph_no':spn,'parent_ph_no':ppn},False,True)
+                res=requests_manager(route,methods,{'dep':department.current.value,'sem':semester.current.value,'reg_no':reg_no,'student_name':name,'student_ph_no':spn,'parent_ph_no':ppn},False,True)
                 page.views[-1].controls[0].content.controls[2].controls[0].content.controls[1].value=""
                 page.views[-1].controls[0].content.controls[2].controls[0].content.controls[2].value=""
                 page.views[-1].controls[0].content.controls[2].controls[0].content.controls[3].value=""
