@@ -1,7 +1,7 @@
 import requests
 
 def requests_manager(route,method,data,isjson,isdata):
-    url='https://lmec-backend.onrender.com'+route
+    url='https://lmec-backend.vercel.app'+route
     try:
         response=None
         if isjson:
