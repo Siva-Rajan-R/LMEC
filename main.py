@@ -28,7 +28,7 @@ def main(page:Page):
                     download_path=f'{e.path}/Latha Mathavan student Details ({i}).xlsx'
                     i+=1
             
-            response=requests.get('https://lmec-backend.onrender.com/download-student-details',json={'data':download_dict})
+            response=requests.get('https://lmec-backend.vercel.app/download-student-details',json={'data':download_dict})
             try:
                 with open(download_path,'wb') as f:
                     f.write(response.content)
