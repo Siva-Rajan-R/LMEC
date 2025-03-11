@@ -1,7 +1,7 @@
 import requests
 
 def requests_manager(route,method,data,isjson,isdata):
-    url='https://xenogeneic-jessalyn-aarthi-7242c979.koyeb.app'+route
+    url='https://lmec-backend.onrender.com'+route
     try:
         response=None
         if isjson:
